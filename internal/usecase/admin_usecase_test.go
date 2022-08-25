@@ -116,3 +116,98 @@ func TestAdminUsecase(t *testing.T) {
 		})
 	}
 }
+
+func TestLogin(t *testing.T) {
+	params := domain.UserParam{
+		UserName: gofakeit.Username(),
+		Password: gofakeit.Password(false, false, false, false, false, 10),
+	}
+
+	testCases := []struct {
+		name      string
+		input     domain.UserParam
+		buildStub func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure)
+		checkAns  func(t *testing.T, err *domain.Err)
+	}{
+		{
+			name:  "OK",
+			input: params,
+			buildStub: func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure) {
+				repo.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(params.UserName)).
+					Times(1).
+					Return(
+						domain.UserResponse{UserName: params.UserName, Password: "hashed"},
+						nil,
+					)
+
+				hasher.EXPECT().
+					IsPasswordValid(gomock.Eq(params.Password), gomock.Eq("hashed")).
+					Times(1).
+					Return(true)
+			},
+			checkAns: func(t *testing.T, err *domain.Err) {
+				require.Nil(t, err)
+			},
+		},
+
+		{
+			name:  "User not found",
+			input: params,
+			buildStub: func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure) {
+				repo.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(params.UserName)).
+					Times(1).
+					Return(
+						domain.UserResponse{},
+						domain.WrapErrorf(fmt.Errorf("nothing"), domain.ErrorCodeUserNotFound, ""),
+					)
+
+				hasher.EXPECT().
+					IsPasswordValid(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkAns: func(t *testing.T, err *domain.Err) {
+				require.Error(t, err)
+				require.Equal(t, err.Code(), domain.ErrorCodeUserNotFound)
+			},
+		},
+
+		{
+			name:  "Wrong Password",
+			input: params,
+			buildStub: func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure) {
+				repo.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(params.UserName)).
+					Times(1).
+					Return(
+						domain.UserResponse{UserName: params.UserName, Password: "hashed"},
+						nil,
+					)
+
+				hasher.EXPECT().
+					IsPasswordValid(gomock.Eq(params.Password), gomock.Eq("hashed")).
+					Times(1).
+					Return(false)
+			},
+			checkAns: func(t *testing.T, err *domain.Err) {
+				require.Error(t, err)
+				require.Equal(t, err.Code(), domain.ErrCodeWrongPassword)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+
+			repo := mockrepo.NewMockAdminRepository(ctrl)
+			hasher := mockhash.NewMockSecure(ctrl)
+
+			tc.buildStub(repo, hasher)
+
+			uc := usecase.NewAdminUsecase(repo, usecase.WithHasher(hasher))
+			tc.checkAns(t, uc.Login(context.Background(), tc.input))
+		})
+	}
+}

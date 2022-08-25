@@ -8,4 +8,5 @@ import (
 
 type AdminUseCase interface {
 	CreateUser(context.Context, domain.UserParam) (domain.UserResponse, error)
+	Login(context.Context, domain.UserParam) error
 }

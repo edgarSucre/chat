@@ -38,3 +38,20 @@ func (uc *AdminUsecase) CreateUser(ctx context.Context, params domain.UserParam)
 
 	return uc.repo.CreateUser(ctx, params)
 }
+
+func (uc *AdminUsecase) Login(ctx context.Context, params domain.UserParam) *domain.Err {
+	user, err := uc.repo.GetUser(ctx, params.UserName)
+	if err != nil {
+		return err
+	}
+
+	if !uc.hasher.IsPasswordValid(params.Password, user.Password) {
+		return domain.WrapErrorf(
+			nil,
+			domain.ErrCodeWrongPassword,
+			"wrong password",
+		)
+	}
+
+	return nil
+}

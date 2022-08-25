@@ -45,6 +45,16 @@ func (av *AdminValidator) CreateUser(ctx context.Context, params domain.UserPara
 	return av.uc.CreateUser(ctx, params)
 }
 
+func (av *AdminValidator) Login(ctx context.Context, params domain.UserParam) error {
+	err := av.validator.Struct(params)
+
+	if err != nil {
+		return getValidationError(err)
+	}
+
+	return av.uc.Login(ctx, params)
+}
+
 func getValidationError(err error) *domain.Err {
 
 	if orig, ok := err.(validator.ValidationErrors); ok {

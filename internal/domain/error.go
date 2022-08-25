@@ -16,6 +16,9 @@ const (
 	// Validation
 	ErrorCodeInvalidParams ErrorCode = iota
 
+	// business rules
+	ErrCodeWrongPassword
+
 	// Repository
 	ErrorCodeUserNotFound
 	ErrorCodeUserConflict
