@@ -35,6 +35,21 @@ func (m *MockAdminRepository) EXPECT() *MockAdminRepositoryMockRecorder {
 	return m.recorder
 }
 
+// CreateRoom mocks base method.
+func (m *MockAdminRepository) CreateRoom(arg0 context.Context, arg1 string) (domain.RoomResponse, *domain.Err) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRoom", arg0, arg1)
+	ret0, _ := ret[0].(domain.RoomResponse)
+	ret1, _ := ret[1].(*domain.Err)
+	return ret0, ret1
+}
+
+// CreateRoom indicates an expected call of CreateRoom.
+func (mr *MockAdminRepositoryMockRecorder) CreateRoom(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRoom", reflect.TypeOf((*MockAdminRepository)(nil).CreateRoom), arg0, arg1)
+}
+
 // CreateUser mocks base method.
 func (m *MockAdminRepository) CreateUser(arg0 context.Context, arg1 domain.UserParam) (domain.UserResponse, *domain.Err) {
 	m.ctrl.T.Helper()

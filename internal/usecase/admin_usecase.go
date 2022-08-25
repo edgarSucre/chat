@@ -55,3 +55,12 @@ func (uc *AdminUsecase) Login(ctx context.Context, params domain.UserParam) *dom
 
 	return nil
 }
+
+func (uc *AdminUsecase) CreateRoom(ctx context.Context, params domain.RoomParam) (domain.RoomResponse, *domain.Err) {
+	room, err := uc.repo.CreateRoom(ctx, params.Name)
+	if err != nil {
+		return domain.RoomResponse{}, err
+	}
+
+	return room, nil
+}

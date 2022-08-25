@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAdminUsecase(t *testing.T) {
+func TestCreateUser(t *testing.T) {
 
 	params := domain.UserParam{
 		UserName: gofakeit.Username(),
@@ -208,6 +208,66 @@ func TestLogin(t *testing.T) {
 
 			uc := usecase.NewAdminUsecase(repo, usecase.WithHasher(hasher))
 			tc.checkAns(t, uc.Login(context.Background(), tc.input))
+		})
+	}
+}
+
+func TestCreateRoom(t *testing.T) {
+	params := domain.RoomParam{
+		Name: "room",
+	}
+
+	testCases := []struct {
+		name      string
+		buildStub func(*mockrepo.MockAdminRepository)
+		checkAns  func(*testing.T, domain.RoomResponse, *domain.Err)
+	}{
+		{
+			name: "OK",
+			buildStub: func(repo *mockrepo.MockAdminRepository) {
+				repo.EXPECT().
+					CreateRoom(gomock.Any(), gomock.Eq(params.Name)).
+					Times(1).
+					Return(domain.RoomResponse{ID: 1, Name: params.Name}, nil)
+			},
+			checkAns: func(t *testing.T, resp domain.RoomResponse, err *domain.Err) {
+				require.Nil(t, err)
+				require.NotEmpty(t, resp)
+				require.Equal(t, int64(1), resp.ID)
+				require.Equal(t, params.Name, resp.Name)
+			},
+		},
+
+		{
+			name: "Room Conflict",
+			buildStub: func(repo *mockrepo.MockAdminRepository) {
+				repo.EXPECT().
+					CreateRoom(gomock.Any(), gomock.Eq(params.Name)).
+					Times(1).
+					Return(
+						domain.RoomResponse{},
+						domain.WrapErrorf(nil, domain.ErrorCodeRoomConflict, ""),
+					)
+			},
+			checkAns: func(t *testing.T, resp domain.RoomResponse, err *domain.Err) {
+				require.Error(t, err)
+				require.Empty(t, resp)
+				require.Equal(t, err.Code(), domain.ErrorCodeRoomConflict)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			repo := mockrepo.NewMockAdminRepository(ctrl)
+			hasher := mockhash.NewMockSecure(ctrl)
+
+			tc.buildStub(repo)
+			uc := usecase.NewAdminUsecase(repo, usecase.WithHasher(hasher))
+
+			resp, err := uc.CreateRoom(context.Background(), params)
+			tc.checkAns(t, resp, err)
 		})
 	}
 }

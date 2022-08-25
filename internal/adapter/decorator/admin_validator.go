@@ -55,6 +55,16 @@ func (av *AdminValidator) Login(ctx context.Context, params domain.UserParam) er
 	return av.uc.Login(ctx, params)
 }
 
+func (av *AdminValidator) CreateRoom(ctx context.Context, params domain.RoomParam) (domain.RoomResponse, error) {
+	err := av.validator.Struct(params)
+
+	if err != nil {
+		return domain.RoomResponse{}, getValidationError(err)
+	}
+
+	return av.uc.CreateRoom(ctx, params)
+}
+
 func getValidationError(err error) *domain.Err {
 
 	if orig, ok := err.(validator.ValidationErrors); ok {

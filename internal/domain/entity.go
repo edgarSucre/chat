@@ -11,4 +11,13 @@ type (
 		UserName string
 		Password string
 	}
+
+	RoomParam struct {
+		Name string `validate:"required,gt=7"`
+	}
+
+	RoomResponse struct {
+		ID   int64
+		Name string
+	}
 )

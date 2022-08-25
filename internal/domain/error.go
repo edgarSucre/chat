@@ -23,6 +23,7 @@ const (
 	ErrorCodeUserNotFound
 	ErrorCodeUserConflict
 	ErrorCodeInternalRepository
+	ErrorCodeRoomConflict
 )
 
 func WrapErrorf(orig error, code ErrorCode, format string, a ...interface{}) *Err {

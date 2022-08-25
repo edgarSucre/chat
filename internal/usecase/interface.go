@@ -10,6 +10,7 @@ type (
 	AdminRepository interface {
 		CreateUser(context.Context, domain.UserParam) (domain.UserResponse, *domain.Err)
 		GetUser(context.Context, string) (domain.UserResponse, *domain.Err)
+		CreateRoom(context.Context, string) (domain.RoomResponse, *domain.Err)
 	}
 
 	Secure interface {
