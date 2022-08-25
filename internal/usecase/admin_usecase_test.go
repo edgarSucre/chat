@@ -23,11 +23,13 @@ func TestAdminUsecase(t *testing.T) {
 
 	testCases := []struct {
 		name      string
+		input     domain.UserParam
 		buildStub func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure)
-		checkAns  func(t *testing.T, response domain.UserResponse, err error)
+		checkAns  func(t *testing.T, response domain.UserResponse, err *domain.Err)
 	}{
 		{
-			name: "OK",
+			name:  "OK",
+			input: params,
 			buildStub: func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure) {
 				hasher.EXPECT().
 					SecurePassword(params.Password).
@@ -44,34 +46,36 @@ func TestAdminUsecase(t *testing.T) {
 					Times(1).
 					Return(domain.UserResponse{UserName: params.UserName}, nil)
 			},
-			checkAns: func(t *testing.T, response domain.UserResponse, err error) {
-				require.NoError(t, err)
+			checkAns: func(t *testing.T, response domain.UserResponse, err *domain.Err) {
+				require.Nil(t, err)
 				require.NotEmpty(t, response)
 				require.Equal(t, params.UserName, response.UserName)
 			},
 		},
 
 		{
-			name: "Failed to hash password",
+			name:  "Failed to hash password",
+			input: params,
 			buildStub: func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure) {
 				hasher.EXPECT().
 					SecurePassword(params.Password).
 					Times(1).
-					Return("", fmt.Errorf("can't parse"))
+					Return("", domain.WrapErrorf(fmt.Errorf(""), domain.ErrorCodeInvalidParams, ""))
 
 				repo.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Times(0)
 			},
-			checkAns: func(t *testing.T, response domain.UserResponse, err error) {
+			checkAns: func(t *testing.T, response domain.UserResponse, err *domain.Err) {
 				require.Error(t, err)
-				require.ErrorIs(t, err, domain.ErrBadParamInput)
+				require.Equal(t, err.Code(), domain.ErrorCodeInvalidParams)
 				require.Empty(t, response)
 			},
 		},
 
 		{
-			name: "Failed to create user",
+			name:  "Failed to create user",
+			input: params,
 			buildStub: func(repo *mockrepo.MockAdminRepository, hasher *mockhash.MockSecure) {
 				hasher.EXPECT().
 					SecurePassword(params.Password).
@@ -86,11 +90,11 @@ func TestAdminUsecase(t *testing.T) {
 				repo.EXPECT().
 					CreateUser(gomock.Any(), gomock.Eq(repoParams)).
 					Times(1).
-					Return(domain.UserResponse{}, domain.ErrInternalServerError)
+					Return(domain.UserResponse{}, domain.WrapErrorf(fmt.Errorf(""), domain.ErrorCodeInternalRepository, ""))
 			},
-			checkAns: func(t *testing.T, response domain.UserResponse, err error) {
+			checkAns: func(t *testing.T, response domain.UserResponse, err *domain.Err) {
 				require.Error(t, err)
-				require.ErrorIs(t, err, domain.ErrInternalServerError)
+				require.Equal(t, err.Code(), domain.ErrorCodeInternalRepository)
 				require.Empty(t, response)
 			},
 		},
@@ -107,7 +111,8 @@ func TestAdminUsecase(t *testing.T) {
 			tc.buildStub(repo, hasher)
 
 			uc := usecase.NewAdminUsecase(repo, usecase.WithHasher(hasher))
-			uc.CreateUser(context.Background(), params)
+			rsp, err := uc.CreateUser(context.Background(), tc.input)
+			tc.checkAns(t, rsp, err)
 		})
 	}
 }

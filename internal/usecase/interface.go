@@ -8,7 +8,7 @@ import (
 
 type (
 	AdminRepository interface {
-		CreateUser(context.Context, domain.UserParam) (domain.UserResponse, error)
+		CreateUser(context.Context, domain.UserParam) (domain.UserResponse, *domain.Err)
 	}
 
 	Secure interface {

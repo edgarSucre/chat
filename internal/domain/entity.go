@@ -1,11 +1,9 @@
 package domain
 
-import "errors"
-
 type (
 	UserParam struct {
-		UserName string
-		Password string
+		UserName string `validate:"required,gt=5"`
+		Password string `validate:"required,gt=5"`
 	}
 
 	UserResponse struct {
@@ -13,12 +11,4 @@ type (
 		UserName string
 		Password string
 	}
-)
-
-var (
-	ErrUserDoesNotExists   = errors.New("username entered does not exist")
-	ErrWrongPassword       = errors.New("password is incorrect")
-	ErrUserConflict        = errors.New("user already exists")
-	ErrInternalServerError = errors.New("internal server error")
-	ErrBadParamInput       = errors.New("given param are not valid")
 )

@@ -36,11 +36,11 @@ func (m *MockAdminRepository) EXPECT() *MockAdminRepositoryMockRecorder {
 }
 
 // CreateUser mocks base method.
-func (m *MockAdminRepository) CreateUser(arg0 context.Context, arg1 domain.UserParam) (domain.UserResponse, error) {
+func (m *MockAdminRepository) CreateUser(arg0 context.Context, arg1 domain.UserParam) (domain.UserResponse, *domain.Err) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
 	ret0, _ := ret[0].(domain.UserResponse)
-	ret1, _ := ret[1].(error)
+	ret1, _ := ret[1].(*domain.Err)
 	return ret0, ret1
 }
 

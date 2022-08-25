@@ -12,7 +12,10 @@ type AdminUsecase struct {
 }
 
 func NewAdminUsecase(repository AdminRepository, opt ...AdminUsecaseOption) *AdminUsecase {
-	uc := &AdminUsecase{repo: repository, hasher: Hasher{}}
+	uc := &AdminUsecase{
+		repo:   repository,
+		hasher: Hasher{},
+	}
 
 	for _, v := range opt {
 		v(uc)
@@ -21,10 +24,14 @@ func NewAdminUsecase(repository AdminRepository, opt ...AdminUsecaseOption) *Adm
 	return uc
 }
 
-func (uc *AdminUsecase) CreateUser(ctx context.Context, params domain.UserParam) (domain.UserResponse, error) {
+func (uc *AdminUsecase) CreateUser(ctx context.Context, params domain.UserParam) (domain.UserResponse, *domain.Err) {
 	hashed, err := uc.hasher.SecurePassword(params.Password)
 	if err != nil {
-		return domain.UserResponse{}, domain.ErrBadParamInput
+		return domain.UserResponse{}, domain.WrapErrorf(
+			err,
+			domain.ErrorCodeInvalidParams,
+			"can't hash password",
+		)
 	}
 
 	params.Password = hashed
